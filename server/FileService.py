@@ -1,84 +1,101 @@
+import os
+import re
+import logging
+import shutil
+from datetime import datetime
+
+
+def _float_to_datetime(value):
+    return datetime.utcfromtimestamp(value)
+
+
+def _get_full_filename(filename, autocreate=False):
+    if re.search(r'(^|[\\/])\.\.($|[\\/])', filename):
+        raise ValueError('Incorrect value of filename: {}'.format(filename))
+
+    path = os.getcwd()
+    full_filename = os.path.join(path, filename)
+
+    folder = os.path.dirname(full_filename)
+    if autocreate and not os.path.exists(folder):
+        os.makedirs(folder)
+
+    return full_filename
+
 
 def change_dir(path, autocreate=True):
-    """Change current directory of app.
-
-    Args:
-        path (str): Path to working directory with files.
-        autocreate (bool): Create folder if it doesn't exist.
-
-    Raises:
-        RuntimeError: if directory does not exist and autocreate is False.
-    """
-
-    pass
+    if not os.path.exists(path):
+        if autocreate:
+            os.mkdir(path)
+        else:
+            raise RuntimeError('Directory {} is not found'.format(path))
+    os.chdir(path)
 
 
 def get_files():
-    """Get info about all files in working directory.
+    path = os.getcwd()
 
-    Returns:
-        List of dicts, which contains info about each file. Keys:
-        - name (str): filename
-        - create_date (datetime): date of file creation.
-        - edit_date (datetime): date of last file modification.
-        - size (int): size of file in bytes.
-    """
+    list_file = []
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            list_file.append(os.path.join(root, filename))
 
-    pass
+    result = []
+    prefix_size = len(path) + 1
+    for full_filename in list_file:
+        filename = full_filename[prefix_size:]
+        result.append({
+            'name': filename,
+            'create_date': _float_to_datetime(os.path.getctime(full_filename)),
+            'edit_date': _float_to_datetime(os.path.getmtime(full_filename)),
+            'size': os.path.getsize(full_filename),
+        })
+
+    return result
 
 
 def get_file_data(filename):
-    """Get full info about file.
+    full_filename = _get_full_filename(filename)
 
-    Args:
-        filename (str): Filename.
+    if not os.path.exists(full_filename):
+        raise RuntimeError('File {} does not exist'.format(full_filename))
 
-    Returns:
-        Dict, which contains full info about file. Keys:
-        - name (str): filename
-        - content (str): file content
-        - create_date (datetime): date of file creation
-        - edit_date (datetime): date of last file modification
-        - size (int): size of file in bytes
+    with open(full_filename, 'rb') as input_file:
+        content = input_file.read()
 
-    Raises:
-        RuntimeError: if file does not exist.
-        ValueError: if filename is invalid.
-    """
-
-    pass
+    return {
+            'name': filename,
+            'content': content,
+            'create_date': _float_to_datetime(os.path.getctime(full_filename)),
+            'edit_date': _float_to_datetime(os.path.getmtime(full_filename)),
+            'size': os.path.getsize(full_filename)
+        }
 
 
 def create_file(filename, content=None):
-    """Create a new file.
+    full_filename = _get_full_filename(filename, True)
 
-    Args:
-        filename (str): Filename.
-        content (str): String with file content.
+    if os.path.exists(full_filename):
+        logging.warning('file {} already exists')
 
-    Returns:
-        Dict, which contains name of created file. Keys:
-        - name (str): filename
-        - content (str): file content
-        - create_date (datetime): date of file creation
-        - size (int): size of file in bytes
+    with open(full_filename, 'wb') as output_file:
+        if content:
+            output_file.write(bytes(content))
 
-    Raises:
-        ValueError: if filename is invalid.
-    """
-
-    pass
+    return {
+            'name': filename,
+            'content': content,
+            'create_date': _float_to_datetime(os.path.getctime(full_filename)),
+            'size': os.path.getsize(full_filename)
+        }
 
 
 def delete_file(filename):
-    """Delete file.
+    full_filename = _get_full_filename(filename)
+    if not os.path.exists(full_filename):
+        raise RuntimeError('File {} does not exist'.format(full_filename))
 
-    Args:
-        filename (str): filename
-
-    Raises:
-        RuntimeError: if file does not exist.
-        ValueError: if filename is invalid.
-    """
-
-    pass
+    if os.path.isdir(full_filename):
+        shutil.rmtree(full_filename)
+    else:
+        os.remove(full_filename)
