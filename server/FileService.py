@@ -1,20 +1,10 @@
-#!/usr/bin/env python2
 
-
-def commandline_parser():
-    """Command line parser.
-
-    Parse port and working directory parameters from command line.
-
-    Returns:
-        argparse.ArgumentParser
-    """
-
-    pass
-
-
-def command_change_dir():
+def change_dir(path, autocreate=True):
     """Change current directory of app.
+
+    Args:
+        path (str): Path to working directory with files.
+        autocreate (bool): Create folder if it doesn't exist.
 
     Raises:
         RuntimeError: if directory does not exist and autocreate is False.
@@ -23,7 +13,7 @@ def command_change_dir():
     pass
 
 
-def command_get_files():
+def get_files():
     """Get info about all files in working directory.
 
     Returns:
@@ -37,8 +27,11 @@ def command_get_files():
     pass
 
 
-def command_get_file_data():
+def get_file_data(filename):
     """Get full info about file.
+
+    Args:
+        filename (str): Filename.
 
     Returns:
         Dict, which contains full info about file. Keys:
@@ -56,8 +49,12 @@ def command_get_file_data():
     pass
 
 
-def command_create_file():
+def create_file(filename, content=None):
     """Create a new file.
+
+    Args:
+        filename (str): Filename.
+        content (str): String with file content.
 
     Returns:
         Dict, which contains name of created file. Keys:
@@ -73,28 +70,15 @@ def command_create_file():
     pass
 
 
-def command_delete_file():
+def delete_file(filename):
     """Delete file.
+
+    Args:
+        filename (str): filename
 
     Raises:
         RuntimeError: if file does not exist.
+        ValueError: if filename is invalid.
     """
 
     pass
-
-
-def main():
-    """Entry point of app.
-
-    Get and parse command line parameters and configure web app.
-
-    Command line options:
-    -f --folder - working directory (absolute or relative path, default: current app folder).
-    -h --help - help.
-    """
-
-    pass
-
-
-if __name__ == '__main__':
-    main()
