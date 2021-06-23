@@ -1,99 +1,87 @@
 #!/usr/bin/env python2
+import argparse
+import json
+import datetime
+import os
+import sys
+
+from server import FileService
 
 
 def commandline_parser():
-    """Command line parser.
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--folder', default=os.path.join(os.getcwd(), 'data'),
+                        help="working directory (default: 'data' folder)")
 
-    Parse port and working directory parameters from command line.
-
-    Returns:
-        argparse.ArgumentParser
-    """
-
-    pass
+    return parser
 
 
 def command_change_dir():
-    """Change current directory of app.
-
-    Raises:
-        RuntimeError: if directory does not exist and autocreate is False.
-    """
-
-    pass
+    path = raw_input('Enter path: ')
+    FileService.change_dir(path)
+    return 'Activated directory {}'.format(path)
 
 
 def command_get_files():
-    """Get info about all files in working directory.
-
-    Returns:
-        List of dicts, which contains info about each file. Keys:
-        - name (str): filename
-        - create_date (datetime): date of file creation.
-        - edit_date (datetime): date of last file modification.
-        - size (int): size of file in bytes.
-    """
-
-    pass
+    return FileService.get_files()
 
 
 def command_get_file_data():
-    """Get full info about file.
-
-    Returns:
-        Dict, which contains full info about file. Keys:
-        - name (str): filename
-        - content (str): file content
-        - create_date (datetime): date of file creation
-        - edit_date (datetime): date of last file modification
-        - size (int): size of file in bytes
-
-    Raises:
-        RuntimeError: if file does not exist.
-        ValueError: if filename is invalid.
-    """
-
-    pass
+    filename = raw_input('Enter filename: ')
+    return FileService.get_file_data(filename)
 
 
 def command_create_file():
-    """Create a new file.
-
-    Returns:
-        Dict, which contains name of created file. Keys:
-        - name (str): filename
-        - content (str): file content
-        - create_date (datetime): date of file creation
-        - size (int): size of file in bytes
-
-    Raises:
-        ValueError: if filename is invalid.
-    """
-
-    pass
+    filename = raw_input('Enter filename: ')
+    content = raw_input('Enter content: ')
+    return FileService.create_file(filename, content)
 
 
 def command_delete_file():
-    """Delete file.
+    filename = raw_input('Enter filename: ')
+    return FileService.delete_file(filename)
 
-    Raises:
-        RuntimeError: if file does not exist.
-    """
 
-    pass
+def command_exit():
+    sys.exit(0)
+
+
+def _json_serializable(obj):
+    if isinstance(obj, datetime.datetime):
+        serial = obj.strftime("%Y.%m.%d %H:%M:%S")
+        return serial
+
+    return obj.__dict__
 
 
 def main():
-    """Entry point of app.
+    parser = commandline_parser()
+    params = parser.parse_args(sys.argv[1:])
+    path = params.folder
+    FileService.change_dir(path)
 
-    Get and parse command line parameters and configure web app.
+    dict_command = {
+        'create': command_create_file,
+        'change_dir': command_change_dir,
+        'list': command_get_files,
+        'get': command_get_file_data,
+        'delete': command_delete_file,
+        'exit': command_exit
+    }
 
-    Command line options:
-    -f --folder - working directory (absolute or relative path, default: current app folder).
-    -h --help - help.
-    """
+    while True:
+        try:
+            command = raw_input("Enter command: ")
 
-    pass
+            result = dict_command.get(command, lambda: "Unknown command: {}".format(command))()
+
+            print(json.dumps({
+                'status': 'success',
+                'result': result,
+            }, indent=2, sort_keys=True, default=_json_serializable))
+
+        except Exception as err:
+            print(str(err))
 
 
 if __name__ == '__main__':
