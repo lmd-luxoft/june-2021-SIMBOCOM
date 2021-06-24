@@ -24,6 +24,9 @@ def _get_full_filename(filename, autocreate=False):
 
 
 def change_dir(path, autocreate=True):
+    if re.search(r'(^|[\\/])\.\.($|[\\/])', path):
+        raise ValueError('Incorrect value of path: {}'.format(path))
+
     if not os.path.exists(path):
         if autocreate:
             os.mkdir(path)
